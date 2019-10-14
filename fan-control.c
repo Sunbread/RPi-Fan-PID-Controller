@@ -172,7 +172,7 @@ int main(void)
     bcm2835_pwm_set_clock(PWM_CLOCK_DIVIDER);
     bcm2835_pwm_set_mode(PWM_CHANNEL, PWM_MODE, true);
     bcm2835_pwm_set_range(PWM_CHANNEL, PWM_RANGE);
-    while (1)
+    while (true)
     {
         int dutycycle_data = round((-feedback / PID_BOUND + 1) / 2 *
             (DATA_UPPER_BOUND - DATA_LOWER_BOUND)) + DATA_LOWER_BOUND;
