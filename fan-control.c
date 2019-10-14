@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <math.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -31,18 +32,18 @@ static inline int get_thermal_zone0_temp(void)
     else return temp;
 }
 
-static inline int pid_status_init(pid_status* status,
+static inline bool pid_status_init(pid_status* status,
     double period, double bound, double k_p, double k_i, double k_d)
 {
     if (!isnormal(period) || signbit(period)) return 0;
     if (!isnormal(bound) && !isinf(bound))
-        return 0;
+        return false;
     if (!isnormal(k_p) && fpclassify(k_p) != FP_ZERO)
-        return 0;
+        return false;
     if (!isnormal(k_i) && fpclassify(k_i) != FP_ZERO)
-        return 0;
+        return false;
     if (!isnormal(k_d) && fpclassify(k_d) != FP_ZERO)
-        return 0;
+        return false;
     status->period = period;
     status->bound = fabs(bound);
     status->k_p = k_p;
@@ -51,7 +52,7 @@ static inline int pid_status_init(pid_status* status,
     status->integral = 0.0;
     status->differential = 0.0;
     status->last_error = 0.0;
-    return 1;
+    return true;
 }
 
 static inline double pid_next(pid_status* status, double error)
@@ -131,7 +132,7 @@ static inline void stop_pwm(void)
     bcm2835_gpio_fsel(GPIO, BCM2835_GPIO_FSEL_OUTP);
     bcm2835_gpio_write(GPIO, OUTPUT_WHILE_EXIT);
     bcm2835_pwm_set_clock(BCM2835_SPI_CLOCK_DIVIDER_1);
-    bcm2835_pwm_set_mode(PWM_CHANNEL, 0, 0);
+    bcm2835_pwm_set_mode(PWM_CHANNEL, 0, false);
     bcm2835_close();
 }
 
@@ -160,7 +161,7 @@ int main(void)
     if (!pid_status_init(&status, PERIOD, PID_BOUND,
         PID_K_P, PID_K_I, PID_K_D))
         return 1;
-    int selected = 0;
+    bool selected = false;
     double feedback = 0.0;
     bcm2835_set_debug(DEBUG_BCM2835);
     signal(SIGINT, SIG_IGN);
@@ -169,7 +170,7 @@ int main(void)
     signal(SIGINT, handle_signal_with_pwm);
     signal(SIGTERM, handle_signal_with_pwm);
     bcm2835_pwm_set_clock(PWM_CLOCK_DIVIDER);
-    bcm2835_pwm_set_mode(PWM_CHANNEL, PWM_MODE, 1);
+    bcm2835_pwm_set_mode(PWM_CHANNEL, PWM_MODE, true);
     bcm2835_pwm_set_range(PWM_CHANNEL, PWM_RANGE);
     while (1)
     {
@@ -179,7 +180,7 @@ int main(void)
         if (!selected)
         {
             bcm2835_gpio_fsel(GPIO, PWM_GPIO_ALT);
-            selected = 1;
+            selected = true;
         }
         sleep(PERIOD);
         int temp = get_thermal_zone0_temp();
