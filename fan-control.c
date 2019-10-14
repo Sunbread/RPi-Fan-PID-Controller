@@ -74,7 +74,7 @@ static inline double pid_next(pid_status* status, double error)
     {
         if (signbit(u)) u = -status->bound;
         else u = status->bound;
-        if (status->k_i != 0) status->integral = (u - p - d) / status->k_i;
+        if (status->k_i != 0.0) status->integral = (u - p - d) / status->k_i;
     }
     if (errno != 0) return NAN;
     return u;
