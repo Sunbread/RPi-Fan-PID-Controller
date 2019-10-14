@@ -118,8 +118,8 @@ static inline void check_pid_file(char* path)
         exit(1);
     }
     char buf[64];
-    int len =
-        snprintf(buf, sizeof(buf) / sizeof(char), "%d\n", (int) getpid());
+    int len = snprintf(buf, sizeof(buf) / sizeof(char),
+        "%d\n", (int) getpid());
     if (len < 0 || write(fd, buf, len) != len)
     {
         fprintf(stderr, "Can't write to %s\n", path);
