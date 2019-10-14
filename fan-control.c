@@ -160,6 +160,7 @@ int main(void)
     if (!pid_status_init(&status, PERIOD, PID_BOUND,
         PID_K_P, PID_K_I, PID_K_D))
         return 1;
+    int selected = 0;
     double feedback = 0.0;
     bcm2835_set_debug(DEBUG_BCM2835);
     signal(SIGINT, SIG_IGN);
@@ -170,12 +171,16 @@ int main(void)
     bcm2835_pwm_set_clock(PWM_CLOCK_DIVIDER);
     bcm2835_pwm_set_mode(PWM_CHANNEL, PWM_MODE, 1);
     bcm2835_pwm_set_range(PWM_CHANNEL, PWM_RANGE);
-    bcm2835_gpio_fsel(GPIO, PWM_GPIO_ALT);
     while (1)
     {
         int dutycycle_data = round((-feedback / PID_BOUND + 1) / 2 *
             (DATA_UPPER_BOUND - DATA_LOWER_BOUND)) + DATA_LOWER_BOUND;
         bcm2835_pwm_set_data(PWM_CHANNEL, dutycycle_data);
+        if (!selected)
+        {
+            bcm2835_gpio_fsel(GPIO, PWM_GPIO_ALT);
+            selected = 1;
+        }
         sleep(PERIOD);
         int temp = get_thermal_zone0_temp();
         if (temp == -1)
