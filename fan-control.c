@@ -177,7 +177,15 @@ int main(void)
             (DATA_UPPER_BOUND - DATA_LOWER_BOUND)) + DATA_LOWER_BOUND;
         bcm2835_pwm_set_data(PWM_CHANNEL, dutycycle_data);
         sleep(PERIOD);
-        double error = SETPOINT_TEMP - get_thermal_zone0_temp() / 1000.0;
+        int temp = get_thermal_zone0_temp();
+        if (temp == -1)
+        {
+            fputs("Can't get temperature.\n", stderr);
+            fputs("This program is aborted.\n", stderr);
+            stop_pwm();
+            return 1;
+        }
+        double error = SETPOINT_TEMP - temp / 1000.0;
         feedback = pid_next(&status, error);
         if (isnan(feedback))
         {
